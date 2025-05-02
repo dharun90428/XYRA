@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Vertical Calendar Task Manager</title>
   <style>
+    /* [All your styles remain unchanged] */
     body {
       margin: 0;
       font-family: Arial, sans-serif;
@@ -12,28 +13,23 @@
       color: #333;
       transition: background-color 0.3s, color 0.3s;
     }
-
     body.dark {
       background-color: #121212;
       color: #f1f1f1;
     }
-
     .container {
       max-width: 1000px;
       margin: 40px auto;
       padding: 0 10px;
     }
-
     .calendar-section {
       display: flex;
       flex-direction: column;
       align-items: center;
     }
-
     .calendar-header {
       text-align: center;
     }
-
     .calendar-grid {
       display: grid;
       grid-template-rows: repeat(6, 1fr);
@@ -42,7 +38,6 @@
       width: 100%;
       margin-top: 20px;
     }
-
     .day {
       padding: 12px;
       text-align: center;
@@ -53,50 +48,44 @@
       transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
       position: relative;
     }
-
     body.dark .day {
       background-color: #1c1c1c;
       border-color: #444;
     }
-
     .day:hover {
       background-color: #007bff;
       color: white;
     }
-
     body.dark .day:hover {
       background-color: #555;
     }
-
     .has-tasks {
       background-color: #ffeb3b;
       box-shadow: 0 0 10px rgba(255, 235, 59, 0.7);
     }
-
     .selected {
       background-color: #ff9800;
       color: white;
       box-shadow: 0 0 10px 3px rgba(255, 152, 0, 0.6);
     }
-
     body.dark .selected {
       background-color: #ff5722;
       box-shadow: 0 0 10px 3px rgba(255, 87, 34, 0.6);
     }
-
     .task-list {
       margin-top: 10px;
       font-size: 0.8em;
       color: #333;
     }
-
+    body.dark .task-list {
+      color: #ccc;
+    }
     .task-name {
       background-color: #f9f9f9;
       border-radius: 5px;
       margin: 3px 0;
       padding: 3px;
     }
-
     .tasks-section {
       margin-top: 30px;
       padding: 20px;
@@ -104,11 +93,9 @@
       border-radius: 10px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
-
     body.dark .tasks-section {
       background-color: #1c1c1c;
     }
-
     #addTaskBtn {
       position: fixed;
       top: 15px;
@@ -119,12 +106,11 @@
       border: none;
       border-radius: 5px;
       cursor: pointer;
+      z-index: 1000;
     }
-
     body.dark #addTaskBtn {
       background-color: #555;
     }
-
     #modeToggle {
       position: fixed;
       top: 15px;
@@ -137,22 +123,12 @@
       cursor: pointer;
       font-weight: bold;
       box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
-      z-index: 999;
+      z-index: 1000;
     }
-
     body.dark #modeToggle {
       background-color: #333;
       color: #fff;
     }
-
-    .empty-state {
-      text-align: center;
-      font-size: 1.2em;
-      color: #777;
-      margin-top: 20px;
-    }
-
-    /* Modal styles */
     .modal {
       display: none;
       position: fixed;
@@ -163,24 +139,22 @@
       background-color: rgba(0, 0, 0, 0.5);
       align-items: center;
       justify-content: center;
+      z-index: 999;
     }
-
     .modal-content {
       background-color: white;
       padding: 20px;
       border-radius: 5px;
       width: 300px;
+      position: relative;
     }
-
-    .modal input,
-    .modal select {
+    .modal input {
       width: 100%;
       padding: 10px;
       margin: 10px 0;
       border: 1px solid #ccc;
       border-radius: 5px;
     }
-
     .modal button {
       padding: 10px;
       background-color: #007bff;
@@ -189,11 +163,13 @@
       border-radius: 5px;
       cursor: pointer;
     }
-
     .modal button:hover {
       background-color: #0056b3;
     }
-
+    .task label.completed {
+      text-decoration: line-through;
+      opacity: 0.6;
+    }
   </style>
 </head>
 <body>
@@ -212,8 +188,8 @@
     </div>
   </div>
 
-  <!-- Modal for adding task -->
-  <div class="modal" id="taskModal">
+  <!-- Modal -->
+  <div class="modal" id="taskModal" onclick="handleModalClick(event)">
     <div class="modal-content">
       <h3>Add Task</h3>
       <input type="text" id="taskName" placeholder="Task Name" />
@@ -228,10 +204,10 @@
     const taskList = document.getElementById("taskList");
     const taskDateLabel = document.getElementById("taskDateLabel");
     const addTaskBtn = document.getElementById("addTaskBtn");
-
     const taskModal = document.getElementById("taskModal");
     const taskNameInput = document.getElementById("taskName");
     const taskDateInput = document.getElementById("taskDate");
+    const modeToggle = document.getElementById("modeToggle");
 
     const today = new Date();
     const year = today.getFullYear();
@@ -266,7 +242,6 @@
           div.classList.add("selected");
         }
 
-        // Task names under each date
         const taskContainer = document.createElement("div");
         taskContainer.classList.add("task-list");
 
@@ -280,55 +255,100 @@
         }
 
         div.appendChild(taskContainer);
-
         div.onclick = () => selectDate(day);
         calendarGrid.appendChild(div);
       }
     }
 
     function selectDate(day) {
-      const selectedDay = `${year}-${(month + 1).toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
-      if (selectedDate === selectedDay) {
-        selectedDate = null;
-        taskDateLabel.textContent = "Upcoming Tasks";
-      } else {
-        selectedDate = selectedDay;
-        taskDateLabel.textContent = `Tasks for ${selectedDate}`;
-      }
-      renderTasks();
+      const dateStr = `${year}-${(month + 1).toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
+      selectedDate = selectedDate === dateStr ? null : dateStr;
       renderCalendar();
+      renderTasks();
     }
 
     function renderTasks() {
       taskList.innerHTML = "";
-      if (selectedDate) {
-        const taskArray = tasks[selectedDate] || [];
-        if (taskArray.length > 0) {
-          taskArray.forEach((task, index) => {
+
+      if (selectedDate && tasks[selectedDate]) {
+        taskDateLabel.textContent = `Tasks for ${selectedDate}`;
+        tasks[selectedDate].forEach((task, index) => {
+          const div = document.createElement("div");
+          div.className = "task";
+
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.id = `task-${selectedDate}-${index}`;
+          checkbox.checked = task.completed;
+          checkbox.onchange = () => {
+            task.completed = checkbox.checked;
+            localStorage.setItem("tasks", JSON.stringify(tasks));
+            renderTasks();
+          };
+
+          const label = document.createElement("label");
+          label.htmlFor = checkbox.id;
+          label.className = task.completed ? "completed" : "";
+          label.innerHTML = `<strong>${task.name}</strong><br>Due: ${task.due}`;
+
+          div.appendChild(checkbox);
+          div.appendChild(label);
+          taskList.appendChild(div);
+        });
+      } else {
+        taskDateLabel.textContent = "All Tasks";
+        const dates = Object.keys(tasks).sort();
+        if (dates.length === 0) {
+          taskList.innerHTML = "<p>No tasks found.</p>";
+          return;
+        }
+
+        dates.forEach(date => {
+          tasks[date].forEach((task, index) => {
             const div = document.createElement("div");
             div.className = "task";
-            div.innerHTML = ` 
-              <input type="checkbox" id="task${index}">
-              <label for="task${index}"><strong>${task.name}</strong><br>Due: ${task.due}</label>
-            `;
+
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.id = `task-${date}-${index}`;
+            checkbox.checked = task.completed;
+            checkbox.onchange = () => {
+              task.completed = checkbox.checked;
+              localStorage.setItem("tasks", JSON.stringify(tasks));
+              renderTasks();
+            };
+
+            const label = document.createElement("label");
+            label.htmlFor = checkbox.id;
+            label.className = task.completed ? "completed" : "";
+            label.innerHTML = `<strong>${task.name}</strong><br>Due: ${task.due}`;
+
+            div.appendChild(checkbox);
+            div.appendChild(label);
             taskList.appendChild(div);
           });
-        } else {
-          taskList.innerHTML = `<p>No tasks for this date.</p>`;
-        }
+        });
       }
     }
 
     addTaskBtn.onclick = () => {
-      taskModal.style.display = 'flex';
+      taskModal.style.display = "flex";
+      taskNameInput.value = "";
+      taskDateInput.value = selectedDate || "";
     };
 
     function closeModal() {
-      taskModal.style.display = 'none';
+      taskModal.style.display = "none";
+    }
+
+    function handleModalClick(event) {
+      if (event.target === taskModal) {
+        closeModal();
+      }
     }
 
     function saveTask() {
-      const name = taskNameInput.value;
+      const name = taskNameInput.value.trim();
       const date = taskDateInput.value;
 
       if (!name || !date) {
@@ -340,17 +360,20 @@
       tasks[date].push({ name, due: date, completed: false });
 
       localStorage.setItem("tasks", JSON.stringify(tasks));
-      renderTasks();
+      if (selectedDate === date) renderTasks();
       renderCalendar();
       closeModal();
     }
 
     modeToggle.onclick = () => {
       document.body.classList.toggle("dark");
-      modeToggle.textContent = document.body.classList.contains("dark") ? "☀️ Light Mode" : "🌙 Dark Mode";
+      modeToggle.textContent = document.body.classList.contains("dark")
+        ? "☀️ Light Mode"
+        : "🌙 Dark Mode";
     };
 
     renderCalendar();
+    renderTasks(); // <-- ensure tasks render on page load
   </script>
 </body>
 </html>
