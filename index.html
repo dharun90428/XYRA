@@ -3,260 +3,220 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Ultimate Productivity Website</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"/>
+  <title>Calendar Task Manager</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background-color: #f8f9fa;
       margin: 0;
-      padding: 0;
+      font-family: Arial, sans-serif;
       transition: background-color 0.3s, color 0.3s;
+      background-color: #eaeaea;
+      color: #333;
     }
 
-    body.dark-mode {
+    body.dark {
       background-color: #121212;
       color: #f1f1f1;
     }
 
     .container {
+      max-width: 900px;
+      margin: 60px auto;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
       display: flex;
-      flex-direction: column;
-      min-height: 100vh;
+      height: 600px;
+      background-color: #fff;
     }
 
-    .header {
+    body.dark .container {
+      background-color: #1c1c1c;
+    }
+
+    .calendar, .sidebar {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .calendar {
+      border-right: 1px solid #ccc;
+    }
+
+    body.dark .calendar {
+      border-color: #333;
+    }
+
+    .calendar h2 {
+      margin-top: 0;
+      text-align: center;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .day {
+      padding: 10px;
+      text-align: center;
+      border: 1px solid #ccc;
+      cursor: pointer;
+      border-radius: 5px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .day:hover {
       background-color: #007bff;
       color: white;
-      padding: 20px;
-      text-align: center;
     }
 
-    .content {
-      flex: 1;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
-      flex-wrap: wrap;
+    body.dark .day:hover {
+      background-color: #555;
     }
 
-    .task-container, .pomodoro-container, .goal-container {
-      background: #ffffff;
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-      width: 100%;
-      max-width: 400px;
-      margin: 20px;
+    .sidebar h3 {
+      margin-top: 0;
     }
 
-    body.dark-mode .task-container,
-    body.dark-mode .pomodoro-container,
-    body.dark-mode .goal-container {
-      background-color: #1f1f1f;
-      color: #f1f1f1;
-    }
-
-    .task-container h3, .pomodoro-container h3, .goal-container h3 {
-      text-align: center;
-    }
-
-    .btn {
-      width: 100%;
-      margin-top: 10px;
-    }
-
-    .task-list {
-      list-style: none;
-      padding: 0;
-    }
-
-    .task-list li {
-      display: flex;
-      justify-content: space-between;
+    .task {
       margin: 10px 0;
+      padding: 10px;
+      background: #f9f9f9;
+      border-radius: 5px;
+      border: 1px solid #ddd;
     }
 
-    .task-list li button {
-      margin-left: 10px;
+    body.dark .task {
+      background-color: #333;
+      border-color: #555;
     }
 
-    .pomodoro-timer {
-      text-align: center;
+    #addTaskBtn {
+      margin-top: 10px;
+      padding: 10px;
+      width: 100%;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
     }
 
-    /* Dark Mode Toggle */
-    #toggle-container {
+    body.dark #addTaskBtn {
+      background-color: #555;
+    }
+
+    /* Toggle button */
+    #modeToggle {
       position: fixed;
       top: 15px;
       right: 15px;
-      z-index: 1000;
-    }
-
-    #toggle-dark {
+      padding: 10px 15px;
+      border: none;
       background-color: #fff;
-      border: 1px solid #ccc;
-      border-radius: 50%;
-      padding: 8px 10px;
-      font-size: 18px;
+      color: #333;
+      border-radius: 20px;
       cursor: pointer;
-      transition: background-color 0.3s;
+      font-weight: bold;
+      box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+      z-index: 999;
+      transition: background-color 0.3s, color 0.3s;
     }
 
-    #toggle-dark:hover {
-      background-color: #f0f0f0;
-    }
-
-    body.dark-mode #toggle-dark {
+    body.dark #modeToggle {
       background-color: #333;
       color: #fff;
-      border: 1px solid #888;
     }
   </style>
 </head>
 <body>
+  <button id="modeToggle">🌙 Dark Mode</button>
 
-<!-- Dark Mode Toggle Button -->
-<div id="toggle-container">
-  <button id="toggle-dark">🌙</button>
-</div>
-
-<div class="container">
-  <div class="header">
-    <h1>Ultimate Productivity Website</h1>
-    <p>Your one-stop tool for managing tasks, Pomodoro sessions, and goals</p>
-  </div>
-
-  <div class="content">
-    <!-- Task Section -->
-    <div class="task-container">
-      <h3>Task Manager</h3>
-      <ul id="task-list" class="task-list"></ul>
-      <input type="text" id="task-input" class="form-control" placeholder="Enter a task">
-      <button class="btn btn-primary" id="add-task">Add Task</button>
+  <div class="container">
+    <div class="calendar">
+      <h2 id="monthLabel">May 2025</h2>
+      <div class="calendar-grid" id="calendarGrid"></div>
     </div>
 
-    <!-- Pomodoro Section -->
-    <div class="pomodoro-container">
-      <h3>Pomodoro Timer</h3>
-      <div id="pomodoro-timer" class="pomodoro-timer">
-        <h4>00:00</h4>
-        <button class="btn btn-success" id="start-timer">Start Timer</button>
-        <button class="btn btn-danger" id="stop-timer">Stop Timer</button>
-      </div>
+    <div class="sidebar">
+      <h3 id="taskDateLabel">Select a date</h3>
+      <div id="taskList"></div>
+      <button id="addTaskBtn">Add Task</button>
     </div>
   </div>
 
-  <div class="content">
-    <!-- Goal Section -->
-    <div class="goal-container">
-      <h3>Goal Setting</h3>
-      <input type="text" id="goal-input" class="form-control" placeholder="Enter your goal">
-      <button class="btn btn-success" id="add-goal">Set Goal</button>
-      <ul id="goal-list" class="task-list"></ul>
-    </div>
-  </div>
-</div>
+  <script>
+    const calendarGrid = document.getElementById("calendarGrid");
+    const monthLabel = document.getElementById("monthLabel");
+    const taskList = document.getElementById("taskList");
+    const taskDateLabel = document.getElementById("taskDateLabel");
+    const addTaskBtn = document.getElementById("addTaskBtn");
+    const modeToggle = document.getElementById("modeToggle");
 
-<script>
-  // Task Logic
-  let taskList = JSON.parse(localStorage.getItem('tasks')) || [];
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-  function renderTasks() {
-    const taskListElement = document.getElementById('task-list');
-    taskListElement.innerHTML = '';
-    taskList.forEach((task, index) => {
-      const li = document.createElement('li');
-      li.innerHTML = `${task} <button class="btn btn-danger btn-sm" onclick="deleteTask(${index})">Delete</button>`;
-      taskListElement.appendChild(li);
-    });
-  }
+    let selectedDate = null;
+    let tasks = JSON.parse(localStorage.getItem("tasks")) || {};
 
-  function deleteTask(index) {
-    taskList.splice(index, 1);
-    localStorage.setItem('tasks', JSON.stringify(taskList));
-    renderTasks();
-  }
+    function renderCalendar() {
+      calendarGrid.innerHTML = "";
+      for (let day = 1; day <= daysInMonth; day++) {
+        const div = document.createElement("div");
+        div.className = "day";
+        div.textContent = day;
+        div.onclick = () => selectDate(day);
+        calendarGrid.appendChild(div);
+      }
+    }
 
-  document.getElementById('add-task').addEventListener('click', () => {
-    const taskInput = document.getElementById('task-input');
-    const task = taskInput.value.trim();
-    if (task) {
-      taskList.push(task);
-      localStorage.setItem('tasks', JSON.stringify(taskList));
-      taskInput.value = '';
+    function selectDate(day) {
+      selectedDate = `${year}-${(month+1).toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
+      taskDateLabel.textContent = `Tasks for ${selectedDate}`;
       renderTasks();
     }
-  });
 
-  // Pomodoro Timer Logic
-  let timer;
-  let isRunning = false;
-  let timeLeft = 25 * 60;
-
-  function startPomodoro() {
-    if (!isRunning) {
-      isRunning = true;
-      timer = setInterval(() => {
-        if (timeLeft <= 0) {
-          clearInterval(timer);
-          alert('Pomodoro session completed!');
-          timeLeft = 25 * 60;
-        } else {
-          timeLeft--;
-          const minutes = Math.floor(timeLeft / 60);
-          const seconds = timeLeft % 60;
-          document.getElementById('pomodoro-timer').children[0].innerHTML =
-            `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-        }
-      }, 1000);
+    function renderTasks() {
+      taskList.innerHTML = "";
+      const taskArray = tasks[selectedDate] || [];
+      taskArray.forEach(task => {
+        const div = document.createElement("div");
+        div.className = "task";
+        div.innerHTML = `<strong>${task.name}</strong><br>Due: ${task.due}`;
+        taskList.appendChild(div);
+      });
     }
-  }
 
-  document.getElementById('start-timer').addEventListener('click', startPomodoro);
-  document.getElementById('stop-timer').addEventListener('click', () => {
-    clearInterval(timer);
-    isRunning = false;
-    timeLeft = 25 * 60;
-    document.getElementById('pomodoro-timer').children[0].innerHTML = '00:00';
-  });
+    addTaskBtn.onclick = () => {
+      if (!selectedDate) {
+        alert("Please select a date first.");
+        return;
+      }
 
-  // Goal Logic
-  let goalList = JSON.parse(localStorage.getItem('goals')) || [];
+      const name = prompt("Task name:");
+      if (!name) return;
 
-  function renderGoals() {
-    const goalListElement = document.getElementById('goal-list');
-    goalListElement.innerHTML = '';
-    goalList.forEach((goal) => {
-      const li = document.createElement('li');
-      li.innerHTML = goal;
-      goalListElement.appendChild(li);
-    });
-  }
+      const due = prompt("Due date (YYYY-MM-DD):", selectedDate);
+      if (!due) return;
 
-  document.getElementById('add-goal').addEventListener('click', () => {
-    const goalInput = document.getElementById('goal-input');
-    const goal = goalInput.value.trim();
-    if (goal) {
-      goalList.push(goal);
-      localStorage.setItem('goals', JSON.stringify(goalList));
-      goalInput.value = '';
-      renderGoals();
-    }
-  });
+      if (!tasks[selectedDate]) tasks[selectedDate] = [];
+      tasks[selectedDate].push({ name, due });
 
-  // Dark Mode Toggle
-  const toggleBtn = document.getElementById('toggle-dark');
-  toggleBtn.addEventListener('click', () => {
-    document.body.classList.toggle('dark-mode');
-    toggleBtn.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
-  });
+      localStorage.setItem("tasks", JSON.stringify(tasks));
+      renderTasks();
+    };
 
-  // Initial render
-  renderTasks();
-  renderGoals();
-</script>
+    modeToggle.onclick = () => {
+      document.body.classList.toggle("dark");
+      modeToggle.textContent = document.body.classList.contains("dark") ? "☀️ Light Mode" : "🌙 Dark Mode";
+    };
 
+    renderCalendar();
+  </script>
 </body>
 </html>
