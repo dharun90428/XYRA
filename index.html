@@ -77,6 +77,26 @@
       background-color: #555;
     }
 
+    .has-tasks {
+      background-color: #ffeb3b;
+      box-shadow: 0 0 10px rgba(255, 235, 59, 0.7);
+    }
+
+    body.dark .has-tasks {
+      background-color: #555;
+      box-shadow: 0 0 10px rgba(255, 235, 59, 0.7);
+    }
+
+    .selected {
+      background-color: #ff9800;
+      color: white;
+      box-shadow: 0 0 10px rgba(255, 152, 0, 0.7);
+    }
+
+    body.dark .selected {
+      background-color: #ff5722;
+    }
+
     .sidebar h3 {
       margin-top: 0;
     }
@@ -109,7 +129,6 @@
       background-color: #555;
     }
 
-    /* Toggle button */
     #modeToggle {
       position: fixed;
       top: 15px;
@@ -130,6 +149,61 @@
       background-color: #333;
       color: #fff;
     }
+
+    .empty-state {
+      text-align: center;
+      font-size: 1.2em;
+      color: #777;
+    }
+
+    /* Responsive mobile support */
+    @media screen and (max-width: 768px) {
+      .container {
+        flex-direction: column;
+        height: auto;
+        margin: 20px;
+      }
+
+      .calendar, .sidebar {
+        width: 100%;
+        padding: 15px;
+      }
+
+      .calendar-grid {
+        grid-template-columns: repeat(7, 1fr);
+        gap: 8px;
+      }
+
+      .day {
+        padding: 15px;
+        font-size: 16px;
+      }
+
+      .task {
+        font-size: 16px;
+        padding: 12px;
+      }
+
+      #addTaskBtn {
+        padding: 14px;
+        font-size: 16px;
+      }
+
+      .sidebar h3, .calendar h2 {
+        font-size: 20px;
+        text-align: center;
+      }
+
+      #modeToggle {
+        font-size: 16px;
+        padding: 12px 18px;
+      }
+
+      .empty-state {
+        font-size: 18px;
+        padding: 10px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -144,6 +218,7 @@
     <div class="sidebar">
       <h3 id="taskDateLabel">Select a date</h3>
       <div id="taskList"></div>
+      <div id="dateList"></div>
       <button id="addTaskBtn">Add Task</button>
     </div>
   </div>
@@ -153,6 +228,7 @@
     const monthLabel = document.getElementById("monthLabel");
     const taskList = document.getElementById("taskList");
     const taskDateLabel = document.getElementById("taskDateLabel");
+    const dateList = document.getElementById("dateList");
     const addTaskBtn = document.getElementById("addTaskBtn");
     const modeToggle = document.getElementById("modeToggle");
 
@@ -170,26 +246,79 @@
         const div = document.createElement("div");
         div.className = "day";
         div.textContent = day;
+
+        const dateKey = `${year}-${(month + 1).toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
+        if (tasks[dateKey] && tasks[dateKey].length > 0) {
+          div.classList.add("has-tasks");
+        }
+
+        if (selectedDate === dateKey) {
+          div.classList.add("selected");
+        }
+
         div.onclick = () => selectDate(day);
         calendarGrid.appendChild(div);
       }
     }
 
     function selectDate(day) {
-      selectedDate = `${year}-${(month+1).toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
-      taskDateLabel.textContent = `Tasks for ${selectedDate}`;
+      const selectedDay = `${year}-${(month + 1).toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
+      if (selectedDate === selectedDay) {
+        unselectDate();
+      } else {
+        selectedDate = selectedDay;
+        taskDateLabel.textContent = `Tasks for ${selectedDate}`;
+        renderTasks();
+        renderCalendar();
+      }
+    }
+
+    function unselectDate() {
+      selectedDate = null;
+      taskDateLabel.textContent = "Select a date";
       renderTasks();
+      renderDateList();
+      renderCalendar();
     }
 
     function renderTasks() {
       taskList.innerHTML = "";
-      const taskArray = tasks[selectedDate] || [];
-      taskArray.forEach(task => {
-        const div = document.createElement("div");
-        div.className = "task";
-        div.innerHTML = `<strong>${task.name}</strong><br>Due: ${task.due}`;
-        taskList.appendChild(div);
-      });
+      if (selectedDate) {
+        const taskArray = tasks[selectedDate] || [];
+        taskArray.forEach(task => {
+          const div = document.createElement("div");
+          div.className = "task";
+          div.innerHTML = `<strong>${task.name}</strong><br>Due: ${task.due}`;
+          taskList.appendChild(div);
+        });
+      } else {
+        taskList.innerHTML = "";
+      }
+    }
+
+    function renderDateList() {
+      dateList.innerHTML = "";
+      if (!selectedDate) {
+        const datesWithTasks = Object.keys(tasks);
+        if (datesWithTasks.length === 0) {
+          dateList.innerHTML = `<div class="empty-state">Nothing to do... yet! 😎</div>`;
+        } else {
+          datesWithTasks.forEach(date => {
+            const div = document.createElement("div");
+            div.className = "day";
+            div.textContent = date;
+            div.onclick = () => selectDateFromList(date);
+            dateList.appendChild(div);
+          });
+        }
+      }
+    }
+
+    function selectDateFromList(date) {
+      selectedDate = date;
+      taskDateLabel.textContent = `Tasks for ${selectedDate}`;
+      renderTasks();
+      renderCalendar();
     }
 
     addTaskBtn.onclick = () => {
@@ -201,14 +330,13 @@
       const name = prompt("Task name:");
       if (!name) return;
 
-      const due = prompt("Due date (YYYY-MM-DD):", selectedDate);
-      if (!due) return;
-
       if (!tasks[selectedDate]) tasks[selectedDate] = [];
-      tasks[selectedDate].push({ name, due });
+      tasks[selectedDate].push({ name, due: selectedDate });
 
       localStorage.setItem("tasks", JSON.stringify(tasks));
       renderTasks();
+      renderDateList();
+      renderCalendar();
     };
 
     modeToggle.onclick = () => {
@@ -217,6 +345,7 @@
     };
 
     renderCalendar();
+    renderDateList();
   </script>
 </body>
 </html>
