@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Calendar Task Manager</title>
+  <title>Vertical Calendar Task Manager</title>
   <style>
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      transition: background-color 0.3s, color 0.3s;
       background-color: #eaeaea;
       color: #333;
+      transition: background-color 0.3s, color 0.3s;
     }
 
     body.dark {
@@ -19,53 +19,44 @@
     }
 
     .container {
-      max-width: 900px;
-      margin: 60px auto;
-      border-radius: 10px;
-      overflow: hidden;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      max-width: 1000px;
+      margin: 40px auto;
+      padding: 0 10px;
+    }
+
+    .calendar-section {
       display: flex;
-      height: 600px;
-      background-color: #fff;
+      flex-direction: column;
+      align-items: center;
     }
 
-    body.dark .container {
-      background-color: #1c1c1c;
-    }
-
-    .calendar, .sidebar {
-      flex: 1;
-      padding: 20px;
-      overflow-y: auto;
-    }
-
-    .calendar {
-      border-right: 1px solid #ccc;
-    }
-
-    body.dark .calendar {
-      border-color: #333;
-    }
-
-    .calendar h2 {
-      margin-top: 0;
+    .calendar-header {
       text-align: center;
     }
 
     .calendar-grid {
       display: grid;
+      grid-template-rows: repeat(6, 1fr);
       grid-template-columns: repeat(7, 1fr);
-      gap: 10px;
+      gap: 6px;
+      width: 100%;
       margin-top: 20px;
     }
 
     .day {
-      padding: 10px;
+      padding: 12px;
       text-align: center;
       border: 1px solid #ccc;
-      cursor: pointer;
       border-radius: 5px;
-      transition: background-color 0.3s, color 0.3s;
+      cursor: pointer;
+      background-color: #fff;
+      transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
+      position: relative;
+    }
+
+    body.dark .day {
+      background-color: #1c1c1c;
+      border-color: #444;
     }
 
     .day:hover {
@@ -82,42 +73,47 @@
       box-shadow: 0 0 10px rgba(255, 235, 59, 0.7);
     }
 
-    body.dark .has-tasks {
-      background-color: #555;
-      box-shadow: 0 0 10px rgba(255, 235, 59, 0.7);
-    }
-
     .selected {
       background-color: #ff9800;
       color: white;
-      box-shadow: 0 0 10px rgba(255, 152, 0, 0.7);
+      box-shadow: 0 0 10px 3px rgba(255, 152, 0, 0.6);
     }
 
     body.dark .selected {
       background-color: #ff5722;
+      box-shadow: 0 0 10px 3px rgba(255, 87, 34, 0.6);
     }
 
-    .sidebar h3 {
-      margin-top: 0;
+    .task-list {
+      margin-top: 10px;
+      font-size: 0.8em;
+      color: #333;
     }
 
-    .task {
-      margin: 10px 0;
-      padding: 10px;
-      background: #f9f9f9;
+    .task-name {
+      background-color: #f9f9f9;
       border-radius: 5px;
-      border: 1px solid #ddd;
+      margin: 3px 0;
+      padding: 3px;
     }
 
-    body.dark .task {
-      background-color: #333;
-      border-color: #555;
+    .tasks-section {
+      margin-top: 30px;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    body.dark .tasks-section {
+      background-color: #1c1c1c;
     }
 
     #addTaskBtn {
-      margin-top: 10px;
+      position: fixed;
+      top: 15px;
+      left: 15px;
       padding: 10px;
-      width: 100%;
       background-color: #007bff;
       color: white;
       border: none;
@@ -142,7 +138,6 @@
       font-weight: bold;
       box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
       z-index: 999;
-      transition: background-color 0.3s, color 0.3s;
     }
 
     body.dark #modeToggle {
@@ -154,94 +149,109 @@
       text-align: center;
       font-size: 1.2em;
       color: #777;
+      margin-top: 20px;
     }
 
-    /* Responsive mobile support */
-    @media screen and (max-width: 768px) {
-      .container {
-        flex-direction: column;
-        height: auto;
-        margin: 20px;
-      }
-
-      .calendar, .sidebar {
-        width: 100%;
-        padding: 15px;
-      }
-
-      .calendar-grid {
-        grid-template-columns: repeat(7, 1fr);
-        gap: 6px; /* reduced gap */
-      }
-
-      .day {
-        padding: 8px; /* reduced padding */
-        font-size: 14px; /* reduced font size */
-      }
-
-      .task {
-        font-size: 16px;
-        padding: 12px;
-      }
-
-      #addTaskBtn {
-        padding: 14px;
-        font-size: 16px;
-      }
-
-      .sidebar h3, .calendar h2 {
-        font-size: 20px;
-        text-align: center;
-      }
-
-      #modeToggle {
-        font-size: 16px;
-        padding: 12px 18px;
-      }
-
-      .empty-state {
-        font-size: 18px;
-        padding: 10px;
-      }
+    /* Modal styles */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      align-items: center;
+      justify-content: center;
     }
+
+    .modal-content {
+      background-color: white;
+      padding: 20px;
+      border-radius: 5px;
+      width: 300px;
+    }
+
+    .modal input,
+    .modal select {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    .modal button {
+      padding: 10px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .modal button:hover {
+      background-color: #0056b3;
+    }
+
   </style>
 </head>
 <body>
   <button id="modeToggle">🌙 Dark Mode</button>
+  <button id="addTaskBtn">+ Add Task</button>
 
   <div class="container">
-    <div class="calendar">
-      <h2 id="monthLabel">May 2025</h2>
+    <div class="calendar-section">
+      <h2 class="calendar-header" id="monthLabel">May 2025</h2>
       <div class="calendar-grid" id="calendarGrid"></div>
     </div>
 
-    <div class="sidebar">
-      <h3 id="taskDateLabel">Select a date</h3>
+    <div class="tasks-section">
+      <h3 id="taskDateLabel">Upcoming Tasks</h3>
       <div id="taskList"></div>
-      <div id="dateList"></div>
-      <button id="addTaskBtn">Add Task</button>
+    </div>
+  </div>
+
+  <!-- Modal for adding task -->
+  <div class="modal" id="taskModal">
+    <div class="modal-content">
+      <h3>Add Task</h3>
+      <input type="text" id="taskName" placeholder="Task Name" />
+      <input type="date" id="taskDate" />
+      <button onclick="saveTask()">Save Task</button>
+      <button onclick="closeModal()">Cancel</button>
     </div>
   </div>
 
   <script>
     const calendarGrid = document.getElementById("calendarGrid");
-    const monthLabel = document.getElementById("monthLabel");
     const taskList = document.getElementById("taskList");
     const taskDateLabel = document.getElementById("taskDateLabel");
-    const dateList = document.getElementById("dateList");
     const addTaskBtn = document.getElementById("addTaskBtn");
-    const modeToggle = document.getElementById("modeToggle");
+
+    const taskModal = document.getElementById("taskModal");
+    const taskNameInput = document.getElementById("taskName");
+    const taskDateInput = document.getElementById("taskDate");
 
     const today = new Date();
     const year = today.getFullYear();
     const month = today.getMonth();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const firstDay = new Date(year, month, 1).getDay();
 
     let selectedDate = null;
     let tasks = JSON.parse(localStorage.getItem("tasks")) || {};
 
     function renderCalendar() {
       calendarGrid.innerHTML = "";
+
+      for (let i = 0; i < firstDay; i++) {
+        const emptyCell = document.createElement("div");
+        emptyCell.className = "day";
+        emptyCell.style.visibility = "hidden";
+        calendarGrid.appendChild(emptyCell);
+      }
+
       for (let day = 1; day <= daysInMonth; day++) {
         const div = document.createElement("div");
         div.className = "day";
@@ -256,6 +266,21 @@
           div.classList.add("selected");
         }
 
+        // Task names under each date
+        const taskContainer = document.createElement("div");
+        taskContainer.classList.add("task-list");
+
+        if (tasks[dateKey]) {
+          tasks[dateKey].forEach(task => {
+            const taskDiv = document.createElement("div");
+            taskDiv.classList.add("task-name");
+            taskDiv.textContent = task.name;
+            taskContainer.appendChild(taskDiv);
+          });
+        }
+
+        div.appendChild(taskContainer);
+
         div.onclick = () => selectDate(day);
         calendarGrid.appendChild(div);
       }
@@ -264,20 +289,13 @@
     function selectDate(day) {
       const selectedDay = `${year}-${(month + 1).toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
       if (selectedDate === selectedDay) {
-        unselectDate();
+        selectedDate = null;
+        taskDateLabel.textContent = "Upcoming Tasks";
       } else {
         selectedDate = selectedDay;
         taskDateLabel.textContent = `Tasks for ${selectedDate}`;
-        renderTasks();
-        renderCalendar();
       }
-    }
-
-    function unselectDate() {
-      selectedDate = null;
-      taskDateLabel.textContent = "Select a date";
       renderTasks();
-      renderDateList();
       renderCalendar();
     }
 
@@ -285,59 +303,47 @@
       taskList.innerHTML = "";
       if (selectedDate) {
         const taskArray = tasks[selectedDate] || [];
-        taskArray.forEach(task => {
-          const div = document.createElement("div");
-          div.className = "task";
-          div.innerHTML = `<strong>${task.name}</strong><br>Due: ${task.due}`;
-          taskList.appendChild(div);
-        });
-      } else {
-        taskList.innerHTML = "";
-      }
-    }
-
-    function renderDateList() {
-      dateList.innerHTML = "";
-      if (!selectedDate) {
-        const datesWithTasks = Object.keys(tasks);
-        if (datesWithTasks.length === 0) {
-          dateList.innerHTML = `<div class="empty-state">Nothing to do... yet! 😎</div>`;
-        } else {
-          datesWithTasks.forEach(date => {
+        if (taskArray.length > 0) {
+          taskArray.forEach((task, index) => {
             const div = document.createElement("div");
-            div.className = "day";
-            div.textContent = date;
-            div.onclick = () => selectDateFromList(date);
-            dateList.appendChild(div);
+            div.className = "task";
+            div.innerHTML = ` 
+              <input type="checkbox" id="task${index}">
+              <label for="task${index}"><strong>${task.name}</strong><br>Due: ${task.due}</label>
+            `;
+            taskList.appendChild(div);
           });
+        } else {
+          taskList.innerHTML = `<p>No tasks for this date.</p>`;
         }
       }
     }
 
-    function selectDateFromList(date) {
-      selectedDate = date;
-      taskDateLabel.textContent = `Tasks for ${selectedDate}`;
-      renderTasks();
-      renderCalendar();
+    addTaskBtn.onclick = () => {
+      taskModal.style.display = 'flex';
+    };
+
+    function closeModal() {
+      taskModal.style.display = 'none';
     }
 
-    addTaskBtn.onclick = () => {
-      if (!selectedDate) {
-        alert("Please select a date first.");
+    function saveTask() {
+      const name = taskNameInput.value;
+      const date = taskDateInput.value;
+
+      if (!name || !date) {
+        alert("Please enter both task name and date.");
         return;
       }
 
-      const name = prompt("Task name:");
-      if (!name) return;
-
-      if (!tasks[selectedDate]) tasks[selectedDate] = [];
-      tasks[selectedDate].push({ name, due: selectedDate });
+      if (!tasks[date]) tasks[date] = [];
+      tasks[date].push({ name, due: date, completed: false });
 
       localStorage.setItem("tasks", JSON.stringify(tasks));
       renderTasks();
-      renderDateList();
       renderCalendar();
-    };
+      closeModal();
+    }
 
     modeToggle.onclick = () => {
       document.body.classList.toggle("dark");
@@ -345,7 +351,6 @@
     };
 
     renderCalendar();
-    renderDateList();
   </script>
 </body>
 </html>
