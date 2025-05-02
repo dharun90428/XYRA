@@ -217,6 +217,7 @@
 
     let selectedDate = null;
     let tasks = JSON.parse(localStorage.getItem("tasks")) || {};
+    let isDarkMode = localStorage.getItem("isDarkMode") === "true";
 
     function renderCalendar() {
       calendarGrid.innerHTML = "";
@@ -366,11 +367,19 @@
     }
 
     modeToggle.onclick = () => {
-      document.body.classList.toggle("dark");
-      modeToggle.textContent = document.body.classList.contains("dark")
-        ? "☀️ Light Mode"
-        : "🌙 Dark Mode";
+      isDarkMode = !isDarkMode;
+      document.body.classList.toggle("dark", isDarkMode);
+      modeToggle.textContent = isDarkMode ? "☀️ Light Mode" : "🌙 Dark Mode";
+      localStorage.setItem("isDarkMode", isDarkMode);
     };
+
+    // Initialize theme based on localStorage value
+    if (isDarkMode) {
+      document.body.classList.add("dark");
+      modeToggle.textContent = "☀️ Light Mode";
+    } else {
+      modeToggle.textContent = "🌙 Dark Mode";
+    }
 
     renderCalendar();
     renderTasks(); // <-- ensure tasks render on page load
